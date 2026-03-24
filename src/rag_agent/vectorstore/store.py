@@ -23,7 +23,7 @@ from rag_agent.agent.state import (
     RetrievedChunk,
 )
 from rag_agent.config import EmbeddingFactory, Settings, get_settings
-
+from langchain_community.document_loaders import PyPDFLoader
 
 class VectorStoreManager:
     """

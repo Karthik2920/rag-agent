@@ -7,7 +7,7 @@
 - Pipeline Engineer: Manoj Anandhan  
 - UX Lead: Fidel Gonzales  
 - Prompt Engineer: Sowmika Yeadhara  
-- QA Lead: Karthik Saraf  
+- QA Lead: Akshaya Paila  
 
 ---
 
@@ -33,12 +33,12 @@ File → Chunking → Embedding → Vector Store (ChromaDB)
 ### Corpus Layer
 
 - **Source files location:** `data/corpus/`
-- **File formats used:** `.md`
+- **File formats used:** `.md`, `.pdf`
 
 - **Landmark papers ingested:**
-  - CNN basics
-  - RNN basics
-  - ANN basics
+- CNN basics (PDF)
+- RNN basics (PDF)
+- ANN basics (PDF)
 
 - **Chunking strategy:**
   512 characters with small overlap for better semantic retrieval.
@@ -206,7 +206,7 @@ Ask questions, see answers + sources, hallucination guard
 
 - Limited dataset size  
 - No advanced filtering  
-- No PDF ingestion  
+- Basic PDF ingestion supported 
 
 ---
 
