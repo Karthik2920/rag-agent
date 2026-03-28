@@ -259,8 +259,7 @@ def render_chat_panel(graph):
 
     # Welcome message when chat is empty
     if not st.session_state.chat_history:
-        st.info("👋 Welcome! Ingest your documents using the sidebar, then ask a question below.")
-        st.markdown("**Try one of these:**")
+        st.markdown("**Try one of these questions to get started:**")
         example_questions = [
             "What is backpropagation?",
             "How do CNNs detect features in images?",
@@ -287,7 +286,7 @@ def render_chat_panel(graph):
                         for src in msg["sources"]:
                             st.markdown(f"- 📄 **{src}**")
 
-    query = st.chat_input("e.g. What is backpropagation? How does an LSTM work?")
+    query = st.chat_input("Type your question here...")
 
     # Handle example question button clicks
     if "_pending_query" in st.session_state:
