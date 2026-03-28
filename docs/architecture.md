@@ -36,9 +36,9 @@ File → Chunking → Embedding → Vector Store (ChromaDB)
 - **File formats used:** `.md`, `.pdf`
 
 - **Landmark papers ingested:**
-- CNN basics (PDF)
-- RNN basics (PDF)
-- ANN basics (PDF)
+- AlexNet (CNN) — alexnet.pdf
+- LSTM (RNN) — lstm.pdf
+- Artificial Neural Networks — ann.pdf
 
 - **Chunking strategy:**
   512 characters with small overlap for better semantic retrieval.
@@ -61,9 +61,9 @@ Content-based hashing ensures duplicate chunks are skipped reliably.
 - [x] ANN
 - [x] CNN
 - [x] RNN
-- [ ] LSTM
-- [ ] Seq2Seq
-- [ ] Autoencoder
+- [x] LSTM
+- [x] Seq2Seq
+- [x] Autoencoder
 - [ ] SOM
 - [ ] Boltzmann Machine
 - [ ] GAN
@@ -212,9 +212,10 @@ Ask questions, see answers + sources, hallucination guard
 
 ## What We Would Do With More Time
 
-- Add hybrid search  
-- Add re-ranking  
-- Support PDFs  
+- Add hybrid search (BM25 + semantic)
+- Add re-ranking for better retrieval precision
+- Add bonus topics: SOM, Boltzmann Machine, GAN
+- Implement streaming responses in the UI
 
 ---
 
