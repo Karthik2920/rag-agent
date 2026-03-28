@@ -126,7 +126,7 @@ generation_node  [END]   ← hallucination guard fires here
         # 5. graph.add_edge("generation", END)
         #
         # 6. return graph.compile(checkpointer=self._checkpointer)
-        raise NotImplementedError
+        # raise NotImplementedError
 
 
 @lru_cache(maxsize=1)

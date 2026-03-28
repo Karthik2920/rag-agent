@@ -343,43 +343,28 @@ class VectorStoreManager:
     # -----------------------------------------------------------------------
 
     def list_documents(self) -> list[dict]:
-        """
-        Return a list of all unique source documents in the collection.
-
-        Used by the UI to populate the document viewer panel.
-
-        Returns
-        -------
-        list[dict]
-            Each item contains: source (str), topic (str), chunk_count (int).
-        """
-        # TODO: implement
-        # Query all metadata from the collection
-        # Group by metadata["source"] and count chunks per source
-        # Return sorted list of dicts
-        raise NotImplementedError
+        result = self._collection.get(include=["metadatas"])
+        grouped = {}
+        for meta in result["metadatas"]:
+            source = meta.get("source", "unknown")
+            if source not in grouped:
+                grouped[source] = {"source": source, "topic": meta.get("topic", "?"), "chunk_count": 0}
+            grouped[source]["chunk_count"] += 1
+        return sorted(grouped.values(), key=lambda x: x["source"])
 
     def get_document_chunks(self, source: str) -> list[DocumentChunk]:
-        """
-        Retrieve all chunks belonging to a specific source document.
-
-        Used by the document viewer to display document content.
-
-        Parameters
-        ----------
-        source : str
-            The source filename to retrieve chunks for.
-
-        Returns
-        -------
-        list[DocumentChunk]
-            All chunks from this source, ordered by their position
-            in the original document.
-        """
-        # TODO: implement
-        # self._collection.get(where={"source": source}, include=["documents", "metadatas"])
-        # Reconstruct DocumentChunk objects from results
-        raise NotImplementedError
+        result = self._collection.get(
+            where={"source": source},
+            include=["documents", "metadatas", "ids"],
+        )
+        chunks = []
+        for chunk_id, text, meta in zip(result["ids"], result["documents"], result["metadatas"]):
+            chunks.append(DocumentChunk(
+                chunk_id=chunk_id,
+                chunk_text=text,
+                metadata=ChunkMetadata.from_dict(meta),
+            ))
+        return chunks
 
     def get_collection_stats(self) -> dict:
         """

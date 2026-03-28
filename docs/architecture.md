@@ -194,11 +194,11 @@ Ask questions, see answers + sources, hallucination guard
 
 | Test | Expected | Actual | Pass / Fail |
 |---|---|---|---|
-| Normal query | Correct answer | Works | Pass |
-| Off-topic query | Fallback | Works | Pass |
-| Duplicate ingestion | Skipped | Works | Pass |
-| Empty query | No crash | Works | Pass |
-| Cross-topic query | Partial | Works | Pass |
+| Normal query ("What is backpropagation?") | Correct answer with sources | Answer generated with source citations | Pass |
+| Off-topic query ("What is the capital of France?") | Hallucination guard fires | "Does not contain enough information", no sources shown | Pass |
+| Duplicate ingestion | 0 chunks added, all skipped | 0 chunks added, 426 duplicates skipped | Pass |
+| Empty query | No crash | Streamlit blocks empty submission natively | Pass |
+| Cross-topic query ("How do LSTMs improve on RNNs?") | Chunks from multiple topics | Retrieved from lstm.pdf and rnn_intermediate.md | Pass |
 
 ---
 
@@ -220,14 +220,21 @@ Ask questions, see answers + sources, hallucination guard
 
 ## Hour 3 Interview Questions
 
-**Question 1:** Why use RAG?  
-**Answer:** It grounds responses in real data and prevents hallucination.
+**Question 1 (Single topic — LSTM):** Walk me through the three gates in an LSTM and what each one controls.
 
-**Question 2:** Why ChromaDB?  
-**Answer:** Lightweight and easy for local vector storage.
+**Model Answer:** An LSTM has three gates. The forget gate decides what information to discard from the cell state — it outputs values between 0 and 1, where 0 means completely forget and 1 means completely keep. The input gate decides what new information to write into the cell state. The output gate controls what part of the cell state gets passed to the next hidden state. Together, these gates allow the LSTM to selectively remember or forget information at each time step, which is how it solves the vanishing gradient problem that standard RNNs suffer from.
 
-**Question 3:** How do you prevent hallucination?  
-**Answer:** Strict prompts + fallback mechanism.
+---
+
+**Question 2 (Cross-topic — Seq2Seq + Autoencoder):** How does the encoder in a Seq2Seq model relate to the encoder in an autoencoder?
+
+**Model Answer:** Both encoders compress input into a lower-dimensional representation. In a Seq2Seq model, the encoder reads an input sequence and compresses it into a context vector, which the decoder uses to generate the output sequence. In an autoencoder, the encoder compresses the input into a latent space bottleneck, and the decoder reconstructs the original input. The key difference is purpose — Seq2Seq encodes for translation or generation of a different sequence, while an autoencoder encodes for reconstruction and feature learning. Both face the same bottleneck problem: too small a representation loses information.
+
+---
+
+**Question 3 (System design / tradeoff):** Why did your team choose chunk size 512 and what would break if you doubled it to 1024?
+
+**Model Answer:** We chose 512 characters to balance context richness with retrieval precision. A chunk needs to be large enough to contain one complete idea, but small enough that when retrieved it is actually relevant to the query. If we doubled to 1024, each chunk would contain multiple ideas — retrieval would still find the chunk, but the LLM would receive noisy context with irrelevant content mixed in, degrading answer quality. It would also reduce the total number of chunks, meaning less granular retrieval. Smaller k values like our top-2 retrieval work well at 512 but would need to increase at 1024 to cover the same semantic ground.
 
 ---
 

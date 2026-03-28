@@ -126,21 +126,20 @@ def render_ingestion_panel(
         if st.sidebar.button("Ingest Documents"):
             import tempfile
             from pathlib import Path
-            import os
 
             file_paths = []
-            # Save files temporarily
             for file in uploaded_files:
                 with tempfile.NamedTemporaryFile(delete=False, suffix=Path(file.name).suffix) as tmp:
-                   tmp.write(file.getvalue())
-                # from pathlib import Path
-
+                    tmp.write(file.getvalue())
                 file_paths.append((Path(tmp.name), file.name))
-            # Chunk files
+
+            progress = st.sidebar.progress(0, text="Chunking files...")
             chunks = chunker.chunk_files(file_paths)
-            # Store in vector DB
+            progress.progress(50, text="Embedding & storing...")
             result = store.ingest(chunks)
-            # Show results
+            progress.progress(100, text="Done!")
+            progress.empty()
+
             st.sidebar.success(
                 f"✅ {result.ingested} chunks added, {result.skipped} duplicates skipped"
             )
@@ -172,25 +171,19 @@ def render_ingestion_panel(
 
 
 def render_corpus_stats(store: VectorStoreManager) -> None:
-    """
-    Render a compact corpus health summary in the sidebar.
-
-    Shows total chunks, topics covered, and whether bonus topics
-    are present. Used during Hour 3 to demonstrate corpus completeness.
-
-    Parameters
-    ----------
-    store : VectorStoreManager
-    """
-    # TODO: implement
-    # stats = store.get_collection_stats()
-    # st.sidebar.metric("Total Chunks", stats["total_chunks"])
-    # st.sidebar.write("Topics:", ", ".join(stats["topics"]))
-    # if stats["bonus_topics_present"]:
-    #     st.sidebar.success("✅ Bonus topics present")
-    # else:
-    #     st.sidebar.warning("⚠️ No bonus topics yet")
-    pass
+    try:
+        count = store._collection.count()
+        if count == 0:
+            return
+        all_meta = store._collection.get(include=["metadatas"])
+        topics = sorted({m.get("topic", "?") for m in all_meta["metadatas"]})
+        st.sidebar.divider()
+        st.sidebar.markdown(
+            f"📊 **{len(topics)} topics · {count} chunks**  \n"
+            + "  ".join([f"`{t}`" for t in topics])
+        )
+    except:
+        pass
 
 
 # ---------------------------------------------------------------------------
@@ -202,7 +195,6 @@ def render_corpus_stats(store: VectorStoreManager) -> None:
 def render_document_viewer(store: VectorStoreManager) -> None:
     st.subheader("📄 Document Viewer")
 
-    # Get all documents
     try:
         docs = store._collection.get(include=["metadatas", "documents"])
     except:
@@ -216,179 +208,139 @@ def render_document_viewer(store: VectorStoreManager) -> None:
     documents = docs["documents"]
     metadatas = docs["metadatas"]
 
-    # Show all chunks
+    # Group chunks by source
+    from collections import defaultdict
+    grouped = defaultdict(list)
     for text, meta in zip(documents, metadatas):
-        with st.expander(f"{meta.get('source', 'Unknown')} | {meta.get('topic')}"):
-            st.write(text)
-    """
-    Render the document viewer in the main centre column.
+        source = meta.get("source", "Unknown")
+        grouped[source].append((text, meta))
 
-    Displays a selectable list of ingested documents. When a document
-    is selected, renders its chunk content in a scrollable pane.
+    total_chunks = len(documents)
+    total_docs = len(grouped)
+    st.caption(f"{total_docs} documents · {total_chunks} total chunks")
+    st.divider()
 
-    Parameters
-    ----------
-    store : VectorStoreManager
-    """
-    # st.subheader("📄 Document Viewer")
-
-    # TODO: implement
-    # 1. If no documents ingested: show placeholder message
-    #
-    # 2. st.selectbox("Select document", options=[doc["source"] for doc in docs])
-    #    Store selection in st.session_state["selected_document"]
-    #
-    # 3. On selection change: store.get_document_chunks(selected_source)
-    #
-    # 4. Render chunks in a scrollable container (st.container with fixed height)
-    #    For each chunk:
-    #    - Show metadata badge: topic | difficulty | type
-    #    - Show chunk text
-    #    - Show similarity score if this chunk was used in last response
-    #
-    # 5. Display chunk count and coverage summary below viewer
-
-    # st.info("Ingest documents using the sidebar to view content here.")
+    for source, chunk_list in grouped.items():
+        topic = chunk_list[0][1].get("topic", "?")
+        difficulty = chunk_list[0][1].get("difficulty", "?")
+        with st.expander(f"📄 {source}  ·  {len(chunk_list)} chunks  ·  [{topic} | {difficulty}]"):
+            for i, (text, meta) in enumerate(chunk_list):
+                st.markdown(f"**Chunk {i+1}**")
+                st.text(text[:400] + ("..." if len(text) > 400 else ""))
+                st.divider()
 
 
 # ---------------------------------------------------------------------------
 # Chat Interface Panel (Right)
-# graph = get_compiled_graph()
-def render_chat_panel(store):
-    import streamlit as st
 
-    st.subheader("💬 Interview Prep Chat")
+def _is_insufficient(text: str) -> bool:
+    return any(phrase in text.lower() for phrase in [
+        "does not contain enough information",
+        "not enough information",
+        "cannot answer",
+        "no relevant",
+        "does not mention",
+    ])
 
-    query = st.chat_input("Ask a question")
+
+def render_chat_panel(graph):
+    from langchain_core.messages import HumanMessage
+
+    # Header row with Clear Chat button
+    col_title, col_btn = st.columns([4, 1])
+    with col_title:
+        st.subheader("💬 Interview Prep Chat")
+        st.caption("Ask anything about ANN, CNN, RNN, LSTM, Seq2Seq, or Autoencoder — answers are grounded in your uploaded documents.")
+    with col_btn:
+        st.write("")
+        if st.button("🗑 Clear Chat", use_container_width=True):
+            st.session_state.chat_history = []
+            st.rerun()
+
+    # Welcome message when chat is empty
+    if not st.session_state.chat_history:
+        st.info("👋 Welcome! Ingest your documents using the sidebar, then ask a question below.")
+        st.markdown("**Try one of these:**")
+        example_questions = [
+            "What is backpropagation?",
+            "How do CNNs detect features in images?",
+            "What is the vanishing gradient problem?",
+            "How does an LSTM remember long-term information?",
+        ]
+        col1, col2 = st.columns(2)
+        for i, q in enumerate(example_questions):
+            col = col1 if i % 2 == 0 else col2
+            if col.button(q, use_container_width=True):
+                st.session_state["_pending_query"] = q
+                st.rerun()
+
+    # Replay chat history with timestamps
+    for msg in st.session_state.chat_history:
+        with st.chat_message(msg["role"]):
+            st.write(msg["content"])
+            if msg.get("timestamp"):
+                st.caption(msg["timestamp"])
+            if msg["role"] == "assistant":
+                insufficient = _is_insufficient(msg["content"])
+                if msg.get("sources") and not msg.get("no_context_found") and not insufficient:
+                    with st.expander("📚 Sources"):
+                        for src in msg["sources"]:
+                            st.markdown(f"- 📄 **{src}**")
+
+    query = st.chat_input("e.g. What is backpropagation? How does an LSTM work?")
+
+    # Handle example question button clicks
+    if "_pending_query" in st.session_state:
+        query = st.session_state.pop("_pending_query")
 
     if query:
-        if not query:
-            return
-        results = store.query(query)
+        st.chat_message("user").write(query)
 
-        if not results or len(results) == 0:
-            st.error("⚠️ No relevant context found. Please ask a question related to the uploaded documents.")
-            return
-        valid_chunks = [r for r in results if len(r.chunk_text.strip()) > 30]
-        top_chunk = results[0].chunk_text.lower()
-        # if len(top_chunk) < 50:
-        #     st.error("⚠️ Retrieved context is too weak to answer confidently.")
-        #     return
-        from rag_agent.config import LLMFactory
-        llm = LLMFactory().create()
-        # Show retrieved chunks
-        with st.expander("📚 Retrieved Context"):
-            for r in results:
-                st.write(f"{r.metadata.topic}: {r.chunk_text[:200]}...")
-
-        # Simple answer
-        unique_chunks = list(dict.fromkeys([r.chunk_text for r in results]))
-        context = "\n\n".join(unique_chunks[:2])
-
-        
-        
-
-       
-#         prompt = [
-#              {"role": "system", "content": SYSTEM_PROMPT},
-#              {
-#                  "role": "user",
-#                 "content": f"""
-#         You are a deep learning interview assistant.
-
-# STRICT RULES:
-# - Answer ONLY using the provided context
-# - If the answer is NOT clearly in the context, respond EXACTLY with:
-#   "No relevant context found"
-# - Do NOT use outside knowledge
-# - Do NOT guess or assume
-# - Keep the answer concise (3–5 sentences)
-# - Include citation in format: [SOURCE: topic | filename]
-#         Context:
-#         {context}
-
-#         Question:
-#         {query}
-
-#         Answer clearly and concisely.
-#         """
-#             }
-#         ]
-        user_prompt = ANSWER_PROMPT.format(
-            context=context,
-            question=query
-        )
-
-        # prompt = [
-        #     {"role": "system", "content": SYSTEM_PROMPT},
-        #     {"role": "user", "content": user_prompt}
-        # ]
-        prompt = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {
-                "role": "user",
-                "content": ANSWER_PROMPT.format(
-                    context=context,
-                    question=query
-                )       
-            }
-    ]
-        # response = llm.invoke(prompt)
-        # prompt = f"""
-      # You are a deep learning assistant.
-
-        # Answer the question using the context below.
-
-        # Rules:
-        # - Do NOT use any external knowledge
-        # - Do NOT make assumptions  
-        # - Do NOT include any source citations in your answer 
-        # - Give ONLY one final answer
-        # - Do NOT repeat information
-        # - Keep it concise (3–5 sentences)
-
-        # Context:
-        # {context}
-
-        # Question:
-        # {query}
-
-        # Answer:
-        # """
+        config = {"configurable": {"thread_id": st.session_state.thread_id}}
         with st.spinner("Thinking..."):
-            response = llm.invoke(prompt)
-        # sources = list(dict.fromkeys([
-        #     f"{r.metadata.topic} | {r.metadata.source}" for r in results
-        # ]))
+            result = graph.invoke(
+                {"messages": [HumanMessage(content=query)]},
+                config=config,
+            )
 
-        # source_text = "\n".join([f"[SOURCE: {s}]" for s in sources])
-        answer = response.content
-        answer_lower = answer.lower()
-        st.chat_message("assistant").write(answer)
-        # st.write("DEBUG RESULTS:", results)
-        # final_answer = f"{response.content}\n\n{source_text}"
-        # st.chat_message("assistant").write(final_answer)
-        # st.write("### Answer")
-        # st.write(response.content) 
-        if not ("does not contain enough information" in answer_lower):
-            st.markdown("### 📚 Sources")
+        final = result.get("final_response")
+        if final:
+            answer = final.answer
+            sources = list(dict.fromkeys(final.sources))
+            no_context = final.no_context_found
+            confidence = final.confidence
+            rewritten_query = final.rewritten_query
+        else:
+            answer = "Something went wrong — no response generated."
+            sources = []
+            no_context = False
+            confidence = None
+            rewritten_query = None
 
-    #     sources = list(dict.fromkeys([
-    #         getattr(r.metadata, "source", "Unknown") for r in results
-    # ]))
+        insufficient = _is_insufficient(answer)
+        with st.chat_message("assistant"):
+            st.write(answer)
+            if sources and not no_context and not insufficient:
+                with st.expander("📚 Sources"):
+                    for src in sources:
+                        st.markdown(f"- 📄 **{src}**")
+            if no_context or insufficient:
+                st.warning("⚠️ No relevant content found in corpus.")
 
-    #     for src in sources:
-    #         st.markdown(f"- 📄 **{src}**")
-        
-        sources = list(dict.fromkeys([
-            f"{r.metadata.source} ({r.metadata.topic})"
-            for r in results[:2]
-        ]))
-
-        for src in sources:
-            st.markdown(f"- 📄 **{src}**")
-        # for r in results[:2]:
-        #     st.markdown(f"- 📄 **{r.metadata.source}** ({r.metadata.topic})")
+        from datetime import datetime
+        ts = datetime.now().strftime("%H:%M")
+        st.session_state.chat_history.append({"role": "user", "content": query, "timestamp": ts})
+        st.session_state.chat_history.append({
+            "role": "assistant",
+            "content": answer,
+            "sources": sources,
+            "no_context_found": no_context,
+            "confidence": confidence,
+            "rewritten_query": rewritten_query,
+            "original_query": query,
+            "timestamp": ts,
+        })
+        st.rerun()
 # ---------------------------------------------------------------------------
 
 
@@ -495,7 +447,7 @@ def main() -> None:
         render_document_viewer(store)
 
     with chat_col:
-        render_chat_panel(store)
+        render_chat_panel(graph)
 
 
 if __name__ == "__main__":

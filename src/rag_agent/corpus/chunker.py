@@ -121,12 +121,25 @@ class DocumentChunker:
 
         for file_path, original_name in file_paths:
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
-                    content = f.read()
+                suffix = Path(original_name).suffix.lower()
+                if suffix == ".pdf":
+                    from langchain_community.document_loaders import PyPDFLoader
+                    from langchain_text_splitters import RecursiveCharacterTextSplitter
+                    loader = PyPDFLoader(str(file_path))
+                    pages = loader.load()
+                    splitter = RecursiveCharacterTextSplitter(
+                        chunk_size=self.DEFAULT_CHUNK_SIZE,
+                        chunk_overlap=self.DEFAULT_CHUNK_OVERLAP,
+                    )
+                    docs = splitter.split_documents(pages)
+                    sections = [doc.page_content for doc in docs]
+                else:
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        content = f.read()
+                    sections = content.split("\n\n")
+                    if len(sections) < 3:
+                        sections = [content]
 
-                sections = content.split("\n\n")
-                if len(sections) < 3:
-                    sections = [content]
                 for section in sections:
                     text = section.strip()
                     if not text:
@@ -134,12 +147,18 @@ class DocumentChunker:
                     import uuid
                     chunk_id = str(uuid.uuid4())
                     filename = original_name.lower()
-                    if "ann" in filename.lower():
+                    if "ann" in filename:
                         topic = "ANN"
-                    elif "cnn" in filename.lower():
+                    elif "cnn" in filename or "alexnet" in filename:
                         topic = "CNN"
-                    elif "rnn" in filename.lower():
+                    elif "lstm" in filename:
+                        topic = "LSTM"
+                    elif "rnn" in filename:
                         topic = "RNN"
+                    elif "seq2seq" in filename:
+                        topic = "Seq2Seq"
+                    elif "autoencoder" in filename:
+                        topic = "Autoencoder"
                     else:
                         topic = "general"
 

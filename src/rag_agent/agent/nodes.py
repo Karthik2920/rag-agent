@@ -124,9 +124,9 @@ def retrieval_node(state: AgentState) -> dict:
         difficulty_filter = state.difficulty_filter
 
     chunks = manager.query(
-        query_text=state.rewritten_query,
-        topic_filter=state.topic_filter,
-        difficulty_filter=state.difficulty_filter,
+        query_text=rewritten_query,
+        topic_filter=topic_filter,
+        difficulty_filter=difficulty_filter,
     )
     if not chunks:
         return {
@@ -221,7 +221,7 @@ def generation_node(state: AgentState) -> dict:
         rewritten_query = state.rewritten_query
 
     # ---- Hallucination Guard -----------------------------------------------
-    if state.no_context_found:
+    if no_context:
         no_context_message = (
             "I was unable to find relevant information in the corpus for your query. "
             "This may mean the topic is not yet covered in the study material, or "
@@ -233,7 +233,7 @@ def generation_node(state: AgentState) -> dict:
             sources=[],
             confidence=0.0,
             no_context_found=True,
-            rewritten_query=state.rewritten_query,
+            rewritten_query=rewritten_query,
         )
         return {
             "final_response": response,
