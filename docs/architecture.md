@@ -73,7 +73,7 @@ ChromaDB Vector Store (cosine similarity)
 - **Source files location:** `data/corpus/`
 - **File formats used:** `.md`, `.pdf`
 
-- **Documents ingested (9 total · 453 chunks):**
+- **Documents ingested (12 total):**
 
 | File | Topic | Type |
 |---|---|---|
@@ -86,6 +86,9 @@ ChromaDB Vector Store (cosine similarity)
 | rnn_intermediate.md | RNN | Concept notes |
 | seq2seq_intermediate.md | Seq2Seq | Concept notes |
 | autoencoder_intermediate.md | Autoencoder | Concept notes |
+| som_intermediate.md | SOM | Concept notes (bonus) |
+| boltzmann_intermediate.md | Boltzmann Machine | Concept notes (bonus) |
+| gan_intermediate.md | GAN | Concept notes (bonus) |
 
 - **Chunking strategy:**
   512 characters with 50-character overlap. Overlap prevents concepts that span chunk boundaries from being lost entirely — a common interview talking point.
@@ -111,9 +114,9 @@ ChromaDB Vector Store (cosine similarity)
 - [x] LSTM
 - [x] Seq2Seq
 - [x] Autoencoder
-- [ ] SOM
-- [ ] Boltzmann Machine
-- [ ] GAN
+- [x] SOM
+- [x] Boltzmann Machine
+- [x] GAN
 
 ---
 
@@ -304,7 +307,7 @@ Combines rewritten query + retrieved chunk texts. Instructs the LLM to cite sour
 
 - Add hybrid search (BM25 + semantic) for better keyword matching
 - Add re-ranking (e.g., CrossEncoder) for improved retrieval precision
-- Add bonus topics: SOM, Boltzmann Machine, GAN
+- ~~Add bonus topics: SOM, Boltzmann Machine, GAN~~ ✅ Completed
 - Implement streaming token-by-token responses in the UI
 - Persist conversation history across sessions using SQLite or file-based checkpointer
 - Add metadata filtering UI controls (topic and difficulty dropdowns in chat panel)

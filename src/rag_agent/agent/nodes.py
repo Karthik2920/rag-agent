@@ -12,7 +12,7 @@ PEP 8 | OOP | Single Responsibility
 
 from __future__ import annotations
 
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, trim_messages
 
 from rag_agent.agent.prompts import SYSTEM_PROMPT
 from rag_agent.agent.state import AgentResponse, AgentState
@@ -157,6 +157,24 @@ def generation_node(state: AgentState) -> dict:
 
     avg_confidence = sum(scores) / len(scores) if scores else 0.0
 
+    # Build conversation history trimmed to max_context_tokens
+    if isinstance(state, dict):
+        history = state.get("messages", [])
+    else:
+        history = list(state.messages)
+
+    try:
+        trimmed_history = trim_messages(
+            history,
+            max_tokens=settings.max_context_tokens,
+            strategy="last",
+            token_counter=llm,
+            include_system=True,
+            allow_partial=False,
+        )
+    except Exception:
+        trimmed_history = history[-6:] if len(history) > 6 else history
+
     messages = [
         SystemMessage(content=SYSTEM_PROMPT),
         HumanMessage(
@@ -174,7 +192,7 @@ Rules:
 - Be concise and direct (3–5 sentences)
 - Only say you cannot answer if the context truly has NO relevant information at all"""
         ),
-    ]
+    ] + [m for m in trimmed_history if not isinstance(m, SystemMessage)]
 
     response = llm.invoke(messages)
     answer = response.content
