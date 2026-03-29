@@ -30,9 +30,6 @@ from rag_agent.agent.state import AgentResponse
 from rag_agent.config import get_settings
 from rag_agent.corpus.chunker import DocumentChunker
 from rag_agent.vectorstore.store import VectorStoreManager
-from rag_agent.agent.prompts import SYSTEM_PROMPT
-from rag_agent.agent.prompts import SYSTEM_PROMPT, ANSWER_PROMPT
-from rag_agent.agent.graph import get_compiled_graph
 
 # ---------------------------------------------------------------------------
 # Cached Resources
@@ -186,6 +183,60 @@ def render_corpus_stats(store: VectorStoreManager) -> None:
         pass
 
 
+def render_ingested_documents_panel(store: VectorStoreManager) -> None:
+    TOPIC_COLORS = {
+        "ANN": "#4A90D9",
+        "CNN": "#E67E22",
+        "RNN": "#27AE60",
+        "LSTM": "#8E44AD",
+        "Seq2Seq": "#E74C3C",
+        "Autoencoder": "#16A085",
+        "general": "#7F8C8D",
+    }
+    try:
+        docs = store.list_documents()
+        if not docs:
+            return
+        st.sidebar.divider()
+        st.sidebar.markdown("### 🗂 Corpus Library")
+        for doc in docs:
+            source = doc["source"]
+            topic = doc["topic"]
+            chunk_count = doc["chunk_count"]
+            color = TOPIC_COLORS.get(topic, "#7F8C8D")
+            st.sidebar.markdown(
+                f"""<div style="
+                    background: #1e1e2e;
+                    border-left: 4px solid {color};
+                    border-radius: 6px;
+                    padding: 8px 10px;
+                    margin-bottom: 6px;
+                ">
+                <span style="font-weight:600; font-size:0.82em; color:#f0f0f0;">{source}</span><br>
+                <span style="
+                    background:{color}22;
+                    color:{color};
+                    font-size:0.7em;
+                    border-radius:4px;
+                    padding:1px 6px;
+                    font-weight:600;
+                ">{topic}</span>
+                <span style="color:#888; font-size:0.72em; margin-left:6px;">{chunk_count} chunks</span>
+                </div>""",
+                unsafe_allow_html=True,
+            )
+            col_view, col_del = st.sidebar.columns([1, 1])
+            with col_view:
+                if st.button("📄 View", key=f"view_{source}", use_container_width=True):
+                    st.session_state["selected_document"] = source
+            with col_del:
+                if st.button("🗑 Remove", key=f"del_{source}", use_container_width=True):
+                    store.delete_document(source)
+                    st.rerun()
+    except:
+        pass
+
+
 # ---------------------------------------------------------------------------
 # Document Viewer Panel (Centre)
 # ---------------------------------------------------------------------------
@@ -223,7 +274,9 @@ def render_document_viewer(store: VectorStoreManager) -> None:
     for source, chunk_list in grouped.items():
         topic = chunk_list[0][1].get("topic", "?")
         difficulty = chunk_list[0][1].get("difficulty", "?")
-        with st.expander(f"📄 {source}  ·  {len(chunk_list)} chunks  ·  [{topic} | {difficulty}]"):
+        is_selected = st.session_state.get("selected_document") == source
+        label = f"{'🔍 ' if is_selected else '📄 '}{source}  ·  {len(chunk_list)} chunks  ·  [{topic} | {difficulty}]"
+        with st.expander(label, expanded=is_selected):
             for i, (text, meta) in enumerate(chunk_list):
                 st.markdown(f"**Chunk {i+1}**")
                 st.text(text[:400] + ("..." if len(text) > 400 else ""))
@@ -340,64 +393,6 @@ def render_chat_panel(graph):
             "timestamp": ts,
         })
         st.rerun()
-# ---------------------------------------------------------------------------
-
-
-def render_chat_interface(graph) -> None:
-    """
-    Render the chat interface in the right column.
-
-    Supports multi-turn conversation with the LangGraph agent.
-    Displays source citations with every response.
-    Shows a clear "no relevant context" indicator when the
-    hallucination guard fires.
-
-    Parameters
-    ----------
-    graph : CompiledStateGraph
-        The compiled LangGraph agent from get_compiled_graph().
-    """
-    st.subheader("💬 Interview Prep Chat")
-
-    # Filters
-    col_topic, col_diff = st.columns(2)
-    with col_topic:
-        # TODO: st.selectbox for topic filter
-        pass
-    with col_diff:
-        # TODO: st.selectbox for difficulty filter
-        pass
-
-    # Chat history display
-    chat_container = st.container(height=400)
-    with chat_container:
-        for message in st.session_state.chat_history:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
-                if message.get("sources"):
-                    with st.expander("📎 Sources"):
-                        for source in message["sources"]:
-                            st.caption(source)
-                if message.get("no_context_found"):
-                    st.warning("⚠️ No relevant content found in corpus.")
-
-    # Chat input
-    # TODO: implement
-    # 1. query = st.chat_input("Ask about a deep learning topic...")
-    #
-    # 2. On submit:
-    #    a. Append user message to chat_history
-    #    b. Display user message immediately (st.rerun or direct render)
-    #    c. Build LangGraph input:
-    #       {"messages": [HumanMessage(content=query)]}
-    #    d. config = {"configurable": {"thread_id": st.session_state.thread_id}}
-    #    e. result = graph.invoke(input, config=config)
-    #    f. response = result["final_response"]
-    #    g. Append assistant message with answer, sources, no_context_found flag
-    #
-    # STRETCH GOAL — streaming:
-    # Replace graph.invoke with graph.stream() and use st.write_stream()
-    # to display tokens as they arrive. Significant "wow factor" in Hour 3.
 
 
 # ---------------------------------------------------------------------------
@@ -438,6 +433,7 @@ def main() -> None:
     # Sidebar
     render_ingestion_panel(store, chunker)
     render_corpus_stats(store)
+    render_ingested_documents_panel(store)
 
     # Main content area — two columns
     viewer_col, chat_col = st.columns([1, 1], gap="large")

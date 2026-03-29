@@ -395,6 +395,9 @@ class VectorStoreManager:
         int
             Number of chunks deleted.
         """
-        # TODO: implement
-        # self._collection.delete(where={"source": source})
-        raise NotImplementedError
+        result = self._collection.get(where={"source": source}, include=["metadatas"])
+        count = len(result.get("ids", []))
+        if count > 0:
+            self._collection.delete(where={"source": source})
+        logger.info(f"Deleted {count} chunks for source: {source}")
+        return count
