@@ -160,18 +160,19 @@ def generation_node(state: AgentState) -> dict:
     messages = [
         SystemMessage(content=SYSTEM_PROMPT),
         HumanMessage(
-            content=f"""Context:
+            content=f"""Use the following context to answer the question. Answer directly and confidently based on what the context says. Do not add disclaimers or say you cannot answer if the context contains relevant information.
+
+Context:
 {context}
 
 Question:
 {original_query}
 
-Instructions:
-- Answer ONLY using the provided context
+Rules:
+- Answer using ONLY information found in the context above
 - Do NOT use outside knowledge
-- Do NOT infer anything not explicitly stated
-- If the answer is incomplete, say: "The provided context does not contain enough information to answer this question."
-- Be concise (3–5 sentences)"""
+- Be concise and direct (3–5 sentences)
+- Only say you cannot answer if the context truly has NO relevant information at all"""
         ),
     ]
 

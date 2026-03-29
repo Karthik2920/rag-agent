@@ -198,41 +198,41 @@ def render_ingested_documents_panel(store: VectorStoreManager) -> None:
         if not docs:
             return
         st.sidebar.divider()
-        st.sidebar.markdown("### 🗂 Corpus Library")
-        for doc in docs:
-            source = doc["source"]
-            topic = doc["topic"]
-            chunk_count = doc["chunk_count"]
-            color = TOPIC_COLORS.get(topic, "#7F8C8D")
-            st.sidebar.markdown(
-                f"""<div style="
-                    background: #1e1e2e;
-                    border-left: 4px solid {color};
-                    border-radius: 6px;
-                    padding: 8px 10px;
-                    margin-bottom: 6px;
-                ">
-                <span style="font-weight:600; font-size:0.82em; color:#f0f0f0;">{source}</span><br>
-                <span style="
-                    background:{color}22;
-                    color:{color};
-                    font-size:0.7em;
-                    border-radius:4px;
-                    padding:1px 6px;
-                    font-weight:600;
-                ">{topic}</span>
-                <span style="color:#888; font-size:0.72em; margin-left:6px;">{chunk_count} chunks</span>
-                </div>""",
-                unsafe_allow_html=True,
-            )
-            col_view, col_del = st.sidebar.columns([1, 1])
-            with col_view:
-                if st.button("📄 View", key=f"view_{source}", use_container_width=True):
-                    st.session_state["selected_document"] = source
-            with col_del:
-                if st.button("🗑 Remove", key=f"del_{source}", use_container_width=True):
-                    store.delete_document(source)
-                    st.rerun()
+        with st.sidebar.expander(f"🗂 Corpus Library  ·  {len(docs)} docs", expanded=False):
+            for doc in docs:
+                source = doc["source"]
+                topic = doc["topic"]
+                chunk_count = doc["chunk_count"]
+                color = TOPIC_COLORS.get(topic, "#7F8C8D")
+                st.markdown(
+                    f"""<div style="
+                        background: #1e1e2e;
+                        border-left: 4px solid {color};
+                        border-radius: 6px;
+                        padding: 8px 10px;
+                        margin-bottom: 6px;
+                    ">
+                    <span style="font-weight:600; font-size:0.82em; color:#f0f0f0;">{source}</span><br>
+                    <span style="
+                        background:{color}22;
+                        color:{color};
+                        font-size:0.7em;
+                        border-radius:4px;
+                        padding:1px 6px;
+                        font-weight:600;
+                    ">{topic}</span>
+                    <span style="color:#888; font-size:0.72em; margin-left:6px;">{chunk_count} chunks</span>
+                    </div>""",
+                    unsafe_allow_html=True,
+                )
+                col_view, col_del = st.columns([1, 1])
+                with col_view:
+                    if st.button("📄 View", key=f"view_{source}", use_container_width=True):
+                        st.session_state["selected_document"] = source
+                with col_del:
+                    if st.button("🗑 Remove", key=f"del_{source}", use_container_width=True):
+                        store.delete_document(source)
+                        st.rerun()
     except:
         pass
 

@@ -1,5 +1,9 @@
 # Convolutional Neural Networks (CNN)
 
+## What is a CNN
+
+A Convolutional Neural Network (CNN) is a type of deep learning model specifically designed for processing structured grid data such as images. CNNs learn to recognize patterns — such as edges, textures, and shapes — by applying learnable filters across the input. Unlike fully connected networks, CNNs exploit spatial structure by sharing weights across positions, which drastically reduces the number of parameters. A typical CNN architecture consists of three types of layers: convolution layers for feature extraction, pooling layers for dimensionality reduction, and fully connected layers for final classification or prediction. CNNs are the dominant architecture for computer vision tasks such as image classification, object detection, and segmentation.
+
 ## Convolution Layer
 
 A convolution layer is a fundamental building block of Convolutional Neural Networks (CNNs). It is designed to automatically and adaptively learn spatial hierarchies of features from input images. Instead of connecting every neuron to all inputs, convolution layers use small filters (kernels) that slide across the input image. These filters detect patterns such as edges, textures, and shapes. Each filter produces a feature map that highlights where specific patterns occur in the image. This parameter sharing reduces computational cost and allows CNNs to generalize well to new data. Convolution layers are especially effective for image processing tasks because they preserve spatial relationships between pixels.
