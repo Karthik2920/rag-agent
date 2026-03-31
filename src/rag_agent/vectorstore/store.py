@@ -280,8 +280,8 @@ class VectorStoreManager:
             distances = results["distances"][0]
             for doc, meta, dist in zip(docs, metadatas, distances):
                 score = 1 - dist  # Convert cosine distance to similarity
-                # if score < self._settings.similarity_threshold:
-                #    continue  
+                if score < self._settings.similarity_threshold:
+                    continue
                 retrieved_chunks.append(
                         RetrievedChunk(
                             chunk_id="unknown",  # ChromaDB does not return IDs in query results

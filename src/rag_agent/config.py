@@ -96,7 +96,7 @@ class Settings(BaseSettings):
     # Retrieval
     retrieval_k: int = Field(default=4, alias="RETRIEVAL_K")
     similarity_threshold: float = Field(
-        default=0.3, alias="SIMILARITY_THRESHOLD"
+        default=0.55, alias="SIMILARITY_THRESHOLD"
     )
     max_context_tokens: int = Field(
         default=3000, alias="MAX_CONTEXT_TOKENS"
