@@ -430,6 +430,16 @@ def main() -> None:
     chunker = get_chunker()
     graph = get_graph()
 
+    # Auto-ingest corpus on first run (needed for cloud deployments)
+    if store._collection.count() == 0:
+        corpus_dir = Path(get_settings().corpus_dir)
+        md_files = list(corpus_dir.glob("*.md"))
+        if md_files:
+            with st.spinner("Loading corpus..."):
+                file_pairs = [(p, p.name) for p in md_files]
+                chunks = chunker.chunk_files(file_pairs)
+                store.ingest(chunks)
+
     # Sidebar
     render_ingestion_panel(store, chunker)
     render_corpus_stats(store)
