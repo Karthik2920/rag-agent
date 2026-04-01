@@ -2,6 +2,8 @@
 
 **Live demo:** https://rag-agent-ccmufe7hlptmlcrvlsjin4.streamlit.app/
 
+**Video presentation:** [demo.mp4](demo.mp4) *(compressed for GitHub — video quality is low. Please check Google Drive link for the high quality version)*
+
 A RAG-powered interview preparation agent built with LangChain, LangGraph,
 and ChromaDB. Ingest deep learning study material and chat with it to
 generate and answer technical interview questions.
