@@ -216,7 +216,7 @@ Combines rewritten query + retrieved chunk texts. Instructs the LLM to cite sour
 ### Interface Layer
 
 - **Framework:** Streamlit
-- **Deployment platform:** Local (`localhost:8501`)
+- **Deployment platform:** Streamlit Community Cloud — https://rag-agent-ccmufe7hlptmlcrvlsjin4.streamlit.app/
 
 - **Sidebar — Corpus Ingestion:**
   - Multi-file upload (PDF and MD)
