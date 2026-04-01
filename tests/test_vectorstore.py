@@ -4,8 +4,8 @@ test_vectorstore.py
 Unit tests for VectorStoreManager.
 
 These tests cover the components most likely to be asked about
-in technical interviews: duplicate detection, ingestion correctness,
-retrieval with filters, and the hallucination guard threshold.
+in technical interviews: duplicate detecti on, ingestion correctness,
+retrieval with filters, and the  hallucination guard threshold.
 
 Run with: uv run pytest tests/ -v
 
@@ -48,7 +48,7 @@ def sample_chunk() -> DocumentChunk:
     )
 
 
-@pytest.fixture
+@pytest.fixture 
 def bonus_chunk() -> DocumentChunk:
     """A bonus topic chunk (GAN) for testing is_bonus filtering."""
     metadata = ChunkMetadata(
