@@ -99,14 +99,7 @@ generation_node  [END]   ← hallucination guard fires here
         graph.set_entry_point("rewrite")
         # Edges
         graph.add_edge("rewrite", "retrieval")
-        graph.add_conditional_edges(
-            "retrieval",
-            should_retry_retrieval,
-            {
-                "generate": "generation", 
-                "end": END,
-            },
-        )
+        graph.add_edge("retrieval", "generation")
         graph.add_edge("generation", END)
         # Compile graph
         return graph.compile(checkpointer=self._checkpointer)
