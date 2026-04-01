@@ -334,7 +334,7 @@ until the dependency above you is unblocked.
 - [x] Ingestion result display: chunks added, duplicates skipped, errors
 - [x] Source citations visible in every chat response
 - [x] Clear no-context indicator when hallucination guard fires
-- [ ] Stretch goal: streaming responses
+- [x] Stretch goal: streaming responses
       *(Hint: replace `graph.invoke` with `graph.stream` and
       use `st.write_stream()` to display tokens as they arrive)*
 
@@ -349,24 +349,24 @@ until the dependency above you is unblocked.
 - [x] Run all five integration test cases — record results in `docs/architecture.md`
 - [x] Confirm critical failures fixed: hallucination guard, duplicate
       detection, source citations, no crashes
-- [ ] Write 60-second demo script hitting these beats in order:
+- [x] Write 60-second demo script hitting these beats in order:
       1. Upload two documents
       2. Upload one again — show duplicate detection
       3. Submit a normal query — show source citation
       4. Submit an off-topic query — show hallucination guard
       5. Generate an interview question with model answer
-- [ ] Practice demo script once before rehearsal
+- [x] Practice demo script once before rehearsal
 
 ---
 
 ## Demo Rehearsal
 
-- [ ] One full end-to-end run-through with the actual demo script
-- [ ] Every team member watches and notes anything wrong or confusing
-- [ ] Decide now: fix broken things or work around them gracefully
+- [x] One full end-to-end run-through with the actual demo script
+- [x] Every team member watches and notes anything wrong or confusing
+- [x] Decide now: fix broken things or work around them gracefully
       *(a clean workaround explained openly scores better than a
       hidden bug that surfaces in front of the judges)*
-- [ ] Record a short video walkthrough as a backup
+- [x] Record a short video walkthrough as a backup
       *(Loom, OBS, or your phone — insurance if something breaks live)*
 
 ---
