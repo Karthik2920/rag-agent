@@ -1,6 +1,6 @@
 """
 prompts.py
-==========
+===========
 All LLM prompt templates for the RAG interview preparation agent.
 
 Prompts are defined here as module-level constants so they can be
@@ -159,7 +159,7 @@ Context:
 Question:
 {question}
 
-Instructions:
+Instructions: 
 - Answer ONLY using the provided context
 - Do NOT use outside knowledge
 - Do NOT infer or assume anything not explicitly stated
